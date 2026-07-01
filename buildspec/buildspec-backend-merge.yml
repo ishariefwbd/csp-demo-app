@@ -24,13 +24,24 @@ phases:
 
   build:
     commands:
-      - echo "=== Building backend JAR ==="
-      - mvn -f backend/pom.xml package -DskipTests --no-transfer-progress
-      - echo "=== Building Docker image ==="
-      - docker build -t $ECR_REPO_URI:$IMAGE_TAG -f Dockerfile .
-      - echo "=== Pushing to ECR ==="
-      - docker push $ECR_REPO_URI:$IMAGE_TAG
-      - echo "Pushed $ECR_REPO_URI:$IMAGE_TAG"
+      - |
+        ECR_REPO_NAME=$(echo "$ECR_REPO_URI" | sed 's|.*/||')
+        if aws ecr describe-images --repository-name "$ECR_REPO_NAME" --image-ids imageTag="$IMAGE_TAG" --region $AWS_DEFAULT_REGION > /dev/null 2>&1; then
+          echo "Image $IMAGE_TAG already exists in ECR - skipping build and push"
+          SKIP_BUILD=true
+        else
+          SKIP_BUILD=false
+        fi
+      - |
+        if [ "$SKIP_BUILD" = "false" ]; then
+          echo "=== Building backend JAR ==="
+          mvn -f backend/pom.xml package -DskipTests --no-transfer-progress
+          echo "=== Building Docker image ==="
+          docker build -t $ECR_REPO_URI:$IMAGE_TAG -f Dockerfile .
+          echo "=== Pushing to ECR ==="
+          docker push $ECR_REPO_URI:$IMAGE_TAG
+          echo "Pushed $ECR_REPO_URI:$IMAGE_TAG"
+        fi
 
   post_build:
     commands:
