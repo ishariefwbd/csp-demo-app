@@ -1,7 +1,7 @@
 version: 0.2
 # Merge build: runs on push to main via csp-dev-pipeline.
 # Builds the Docker image, pushes to ECR, and exports IMAGE_TAG for downstream
-# pipeline stages via the BackendBuild namespace variable.
+# pipeline stages via the BackendBuild namespace.
 
 env:
   exported-variables:
@@ -16,8 +16,10 @@ phases:
     commands:
       - echo "=== Computing IMAGE_TAG ==="
       - POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -f pom.xml)
-      - export IMAGE_TAG="${POM_VERSION}-${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"
+      - COMMIT_SHORT=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+      - export IMAGE_TAG="${POM_VERSION}-${COMMIT_SHORT}"
       - echo "IMAGE_TAG=$IMAGE_TAG"
+      - echo "IMAGE_TAG=$IMAGE_TAG" >> $CODEBUILD_ENV_FILE
       - echo "=== Logging in to ECR ==="
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPO_URI
 
@@ -29,11 +31,10 @@ phases:
       - docker build -t $ECR_REPO_URI:$IMAGE_TAG -f Dockerfile .
       - echo "=== Pushing to ECR ==="
       - docker push $ECR_REPO_URI:$IMAGE_TAG
-      - echo "✓ Pushed $ECR_REPO_URI:$IMAGE_TAG"
+      - echo "Pushed $ECR_REPO_URI:$IMAGE_TAG"
 
   post_build:
     commands:
-      - echo "=== Writing imagedefinitions.json ==="
       - printf '[{"name":"wbd-csp-ms","imageUri":"%s"}]' "$ECR_REPO_URI:$IMAGE_TAG" > imagedefinitions.json
       - cat imagedefinitions.json
 

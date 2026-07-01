@@ -1,8 +1,6 @@
 version: 0.2
 # Merge build: runs in parallel with the backend merge build inside csp-dev-pipeline.
-# Builds the Angular app in production mode and uploads the bundle to S3 under:
-#   s3://<ARTIFACT_BUCKET>/builds/<IMAGE_TAG>/
-# The same bundle is used for all environments (env-specific config via runtime env vars).
+# Builds the Angular app and uploads the bundle to S3 for all environments.
 
 phases:
   install:
@@ -13,16 +11,17 @@ phases:
 
   pre_build:
     commands:
-      - echo "=== Computing IMAGE_TAG from parent POM ==="
+      - echo "=== Computing IMAGE_TAG ==="
       - POM_VERSION=$(grep -m1 '<version>' pom.xml | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
-      - export IMAGE_TAG="${POM_VERSION}-${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"
+      - COMMIT_SHORT=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+      - IMAGE_TAG="${POM_VERSION}-${COMMIT_SHORT}"
       - echo "IMAGE_TAG=$IMAGE_TAG"
 
   build:
     commands:
       - echo "=== Building Angular app (production) ==="
       - cd frontend && npx ng build --configuration=production --no-progress
-      - echo "✓ Angular build complete"
+      - echo "Angular build complete"
       - ls -lh dist/csp-demo-frontend/browser/ | head -20
 
   post_build:
@@ -30,10 +29,9 @@ phases:
       - echo "=== Uploading frontend bundle to S3 ==="
       - |
         for env in dev qa stage prod; do
-          echo "  Uploading to s3://$ARTIFACT_BUCKET/builds/$IMAGE_TAG/$env/"
+          echo "Uploading env=$env IMAGE_TAG=$IMAGE_TAG"
           aws s3 sync frontend/dist/csp-demo-frontend/browser/ \
             "s3://$ARTIFACT_BUCKET/builds/$IMAGE_TAG/$env/" \
             --quiet
         done
-      - echo "✓ Frontend artifacts uploaded for IMAGE_TAG $IMAGE_TAG"
-      - echo "  Location: s3://$ARTIFACT_BUCKET/builds/$IMAGE_TAG/"
+      - echo "Frontend artifacts uploaded for IMAGE_TAG=$IMAGE_TAG"
