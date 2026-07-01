@@ -1,0 +1,20 @@
+<div style="background:white; padding:2rem 3rem; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.08); max-width:480px; width:100%; text-align:center;">
+  <h1 style="color:#0d47a1; font-size:1.8rem; margin-bottom:0.5rem;">{{ title }}</h1>
+  <p style="color:#546e7a; margin-bottom:1.5rem;">GitOps CI/CD Demo</p>
+
+  <div *ngIf="hello" style="background:#e8f5e9; border-radius:8px; padding:1rem; margin-bottom:1rem;">
+    <p style="color:#1b5e20; font-weight:600;">{{ hello.message }}</p>
+    <p style="color:#388e3c; font-size:0.9rem; margin-top:0.4rem;">
+      Version: <strong>{{ hello.version }}</strong> &nbsp;|&nbsp; Env: <strong>{{ hello.env }}</strong>
+    </p>
+  </div>
+
+  <div *ngIf="error" style="background:#fff3e0; border-radius:8px; padding:1rem; margin-bottom:1rem;">
+    <p style="color:#e65100; font-size:0.9rem;">{{ error }}</p>
+  </div>
+
+  <p style="color:#90a4ae; font-size:0.8rem;">
+    This page is served by the CSP demo pipeline.<br>
+    Update IMAGE_TAG in the GitOps repo to promote builds.
+  </p>
+</div>

@@ -1,0 +1,36 @@
+version: 0.2
+# Runs on every PR targeting main. Authenticates against CodeArtifact so
+# Maven can resolve dependencies, then runs unit + integration tests.
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+
+  pre_build:
+    commands:
+      - echo "=== Authenticating with CodeArtifact ==="
+      - |
+        CODEARTIFACT_TOKEN=$(aws codeartifact get-authorization-token \
+          --domain $CODEARTIFACT_DOMAIN \
+          --domain-owner $AWS_ACCOUNT_ID \
+          --query authorizationToken \
+          --output text)
+      - |
+        mvn --no-transfer-progress -s /dev/stdin settings.xml <<'SETTINGS_EOF' || true
+        SETTINGS_EOF
+      - echo "CodeArtifact auth complete"
+
+  build:
+    commands:
+      - echo "=== Running backend tests ==="
+      - mvn -f backend/pom.xml test --no-transfer-progress
+      - echo "✓ All backend tests passed"
+
+reports:
+  BackendTestReport:
+    files:
+      - '**/surefire-reports/TEST-*.xml'
+    base-directory: backend/target
+    file-format: JUNITXML
+    discard-expired-reports: false

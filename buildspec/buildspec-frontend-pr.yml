@@ -1,0 +1,16 @@
+version: 0.2
+# Runs on every PR targeting main. Installs dependencies and runs a
+# development build to catch TypeScript/template errors quickly.
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd frontend && npm ci --prefer-offline
+
+  build:
+    commands:
+      - echo "=== Frontend PR check: development build ==="
+      - cd frontend && npx ng build --configuration=development --no-progress
+      - echo "✓ Frontend build passed"
