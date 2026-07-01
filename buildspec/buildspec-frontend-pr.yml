@@ -7,7 +7,7 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd frontend && npm ci --prefer-offline
+      - cd frontend && npm install --prefer-offline
 
   build:
     commands:
