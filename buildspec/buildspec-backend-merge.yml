@@ -19,7 +19,6 @@ phases:
       - COMMIT_SHORT=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
       - export IMAGE_TAG="${POM_VERSION}-${COMMIT_SHORT}"
       - echo "IMAGE_TAG=$IMAGE_TAG"
-      - echo "IMAGE_TAG=$IMAGE_TAG" >> $CODEBUILD_ENV_FILE
       - echo "=== Logging in to ECR ==="
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPO_URI
 
