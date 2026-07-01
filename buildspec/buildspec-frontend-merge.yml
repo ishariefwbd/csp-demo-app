@@ -7,11 +7,11 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
-      - cd frontend && npm install
+      - npm install --prefix frontend
 
   pre_build:
     commands:
-      - echo "=== Computing IMAGE_TAG ==="
+      - echo "Computing IMAGE_TAG"
       - POM_VERSION=$(grep -m1 '<version>' pom.xml | sed 's/.*<version>\(.*\)<\/version>/\1/' | tr -d '[:space:]')
       - COMMIT_SHORT=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
       - IMAGE_TAG="${POM_VERSION}-${COMMIT_SHORT}"
@@ -19,14 +19,12 @@ phases:
 
   build:
     commands:
-      - echo "=== Building Angular app (production) ==="
-      - cd frontend && npx ng build --configuration=production --no-progress
-      - echo "Angular build complete"
-      - ls -lh dist/csp-demo-frontend/browser/ | head -20
+      - echo "Building Angular app (production)"
+      - sh -c 'cd frontend && npx ng build --configuration=production --no-progress'
 
   post_build:
     commands:
-      - echo "=== Uploading frontend bundle to S3 ==="
+      - echo "Uploading frontend bundle to S3"
       - |
         for env in dev qa stage prod; do
           echo "Uploading env=$env IMAGE_TAG=$IMAGE_TAG"
