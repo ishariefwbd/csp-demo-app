@@ -11,6 +11,6 @@ phases:
 
   build:
     commands:
-      - echo "=== Frontend PR check: development build ==="
+      - echo "=== Frontend PR check - development build ==="
       - cd frontend && npx ng build --configuration=development --no-progress
-      - echo "✓ Frontend build passed"
+      - echo "Frontend build passed"

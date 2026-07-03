@@ -1,6 +1,4 @@
 version: 0.2
-# Runs on every PR targeting main. Compiles the backend and runs unit tests.
-
 phases:
   install:
     runtime-versions:
@@ -8,14 +6,6 @@ phases:
 
   build:
     commands:
-      - echo "=== Backend PR check: compile + test ==="
+      - echo "=== Backend PR - compile and test ==="
       - mvn -f backend/pom.xml test --no-transfer-progress
-      - echo "✓ All backend tests passed"
-
-reports:
-  BackendTestReport:
-    files:
-      - '**/surefire-reports/TEST-*.xml'
-    base-directory: backend/target
-    file-format: JUNITXML
-    discard-expired-reports: false
+      - echo "=== All backend tests passed ==="
