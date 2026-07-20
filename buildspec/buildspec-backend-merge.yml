@@ -47,6 +47,17 @@ phases:
     commands:
       - printf '[{"name":"wbd-csp-ms","imageUri":"%s"}]' "$ECR_REPO_URI:$IMAGE_TAG" > imagedefinitions.json
       - cat imagedefinitions.json
+      - echo "=== Emitting Artifact Built notification event ==="
+      - |
+        if [ -n "$EVENT_BUS" ]; then
+          printf '[{"Source":"csp.cicd","DetailType":"Artifact Built","EventBusName":"%s","Detail":"{\\"imageTag\\":\\"%s\\",\\"commitSha\\":\\"%s\\",\\"ecrImageUri\\":\\"%s\\",\\"initiator\\":\\"csp-dev-pipeline\\"}"}]' \
+            "$EVENT_BUS" "$IMAGE_TAG" "$COMMIT_SHORT" "$ECR_REPO_URI:$IMAGE_TAG" > /tmp/artifact-event.json
+          aws events put-events --entries file:///tmp/artifact-event.json --region "$AWS_DEFAULT_REGION" \
+            && echo "Artifact Built event emitted for $IMAGE_TAG" \
+            || echo "put-events failed (non-fatal - notification only)"
+        else
+          echo "EVENT_BUS not set - skipping notification"
+        fi
 
 artifacts:
   files:
